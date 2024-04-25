@@ -1,0 +1,181 @@
+---
+title: "DS2003 - Final Report Group 6"
+output: html_notebook
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Packages used in the project:
+```{r}
+library(tidyverse)
+library(plotly)
+library(ggplot2)
+library(knitr)
+library(foreign)
+library(shiny)
+library(rsconnect)
+library(sf)
+library(rjson)
+library(leaflet)
+library(geojsonio)
+library(rgdal)
+library(pacman)
+```
+
+# Data used for this project and data wrangling:
+```{r}
+# Uploading Kaggle dataset
+accidents_df<- read.csv("US_Accidents_Dec21_updated.csv")
+# Charlottesville subset
+## Subsetting data to all Charlottesville accidents
+virginia_accidents<-accidents_df[accidents_df$State=="VA",]
+charlottesville_accidents<-virginia_accidents[virginia_accidents$Airport_Code=="KCHO",]
+## Removing uncessary rows
+charlottesville_accidents <- charlottesville_accidents[-c(1,2,9:11,13:29,31:43,45:47)]
+## Creating a new column to find duration of accident
+charlottesville_accidents<-charlottesville_accidents%>%
+  ## converting start time to a date type
+  mutate(Start_Time=as.POSIXct(Start_Time))%>%
+  ##converting end time to a date type
+  mutate(End_Time=as.POSIXct(End_Time))
+## Creating traffic duration column
+charlottesville_accidents<-charlottesville_accidents%>%
+  mutate(traffic_duration = difftime(End_Time,Start_Time,units = "hours"))
+
+head(charlottesville_accidents)
+
+# I-64 subset
+## Filtering by all accidents that occur on I-64
+i64_street <- c("I-64 E", "I-64 W")
+i64_accidents <- accidents_df %>% filter(Street %in% i64_street)
+i64_accidents <- i64_accidents[-c(1,2,9:11,13:29,31:43,45:47)]
+## Creating a new column to find duration of accident
+i64_accidents<-i64_accidents%>%
+  ## converting start time to a date type
+  mutate(Start_Time=as.POSIXct(Start_Time))%>%
+  ##converting end time to a date type
+  mutate(End_Time=as.POSIXct(End_Time))
+## Creating traffic duration column
+i64_accidents<-i64_accidents%>%
+  mutate(traffic_duration = difftime(End_Time,Start_Time,units = "hours"))
+
+head(i64_accidents)
+```
+
+## Introduction of dataset:
+
+Road traffic and accidents affect many aspects from time management to safety. There are many sources that collect traffic data that include US and State Departments of Transportation. For data science analysis, this traffic dataset provides valuable data on accident patterns such as weather condition and distance affected that gives important insights on severe and frequent accident conditions. 
+
+This dataset was found on Kaggle and records 2.8 million accidents from February 2016 to Dec 2021. The data is collected from APIs that stream traffic and accidents collected from a variety of sources such as law enforcement officers and traffic cameras. We used this data in our analysis to explore how the COVID-19 pandemic affected accident patterns, and which are the most dangerous conditions and roads to travel on.
+
+## Dataset Summary:
+
+
+### Relevant columns
+
+There are 47 columns in this dataset that include both discrete and continuous data on traffic. Of  the 47 columns, we used 9 which are: 
+
+ * `Start_Lat` (starting latitude): Shows latitude in GPS coordinate of the start point.
+ * `End_Lat` (ending latitude): Shows latitude in GPS coordinate of the end point.
+ * `Start_Lng` (starting longitude): Shows longitude in GPS coordinate of the start point.
+ * `End_Lng` (ending longitude): Shows longitude in GPS coordinate of the end point.
+ * `Start_Time`: Shows start time of the accident in the local time zone.
+ * `End_Time`: Shows end time of the accident (when the impact of accident on traffic flow was dismissed) in local time zone.
+ * `Street`: Shows the street name of the address field.
+ * `Weather_Condition`: Shows the weather condition (clear, overcast, etc.) at the time of the accident.
+ * `Sunrise_Sunset`: Shows the period of day (i.e. day or night) based on sunrise/sunset.
+
+### Omitted columns
+
+We omitted 38 columns in the dataset which were:
+ 
+ * Columns that indicated whether or not there were road features (Amenity, Bump, Crossing, Give_Way, Junction, No_Exit, Railway, Roundabout, Station, Stop, Traffic_Calming, Traffic_Signal, Turning_Loop)
+ * Columns that indicated different ways to differentiate day or night (Civil_Twilight, Nautical_Twilight, Astronomical_Twilight)
+ * Other columns other than street that indicated location (Number, Side, City, County, State, Zipcode, County, Timezone, Airport_Code)
+ * Other columns other than Weather_Condition that indicated weather (Weather_Timestamp, Temperature(F), Wind_Chill(F), Humidity(%), Pressure(in), Visibility(mi), Wind_Direction, Wind_Speed(mph), Precipitation(in))
+ * ID (accident ID) and Description (accident description), Severity (scale of 1-4 of the accident's impact on traffic delays), and Distance(mi) (length of road affected by accident)
+
+
+## Question 1 
+### How Is I64 traffic variation affected by day versus night traffic by comparing I64W to I64E in 2019? 
+
+
+
+
+## Discussion
+I64 East and West bound interstate travels across 6 states Missouri, Illinois, Indiana, Kentucky, West Virginia, Virginia. As one can observe from the graph, ….
+
+## Chart Justification
+Why we chose this specific chart and widgets
+
+## Question 2 
+### How does differing weather conditions affect Charlottesville road traffic?
+
+DISPLAY CHART HERE 
+```{r}
+cville_coords <- charlottesville_accidents[ , c("Start_Lat", "Start_Lng", "Weather_Condition")]
+cville_geo <- readOGR("cville_boundary/municipal_boundary_area_04_06_2023.shp",
+                      layer = "municipal_boundary_area_04_06_2023")
+
+shapeData <- spTransform(cville_geo, CRS("+proj=longlat +datum=WGS84 +no_defs"))
+
+selectInput(
+  "weather", label = "Weather:",
+  choices = unique(cville_coords$Weather_Condition), selected = 'Fair'
+)
+
+renderLeaflet({
+leaflet(cville_coords[cville_coords$Weather_Condition == input$weather, ]) %>% 
+  addProviderTiles("CartoDB.Positron") %>%
+  setView(-78.47, 38.02, zoom = 10) %>% 
+  addPolygons(data=shapeData,
+              col = 'red') %>%
+  addCircleMarkers(label=~Weather_Condition,
+                   lng = ~Start_Lng,
+                   lat = ~Start_Lat,
+                   weight = 3, 
+                   radius=1, 
+                   color="blue")  
+})
+
+```
+
+
+## Discussion 
+## Chart Justification 
+Why we chose this specific chart and widgets
+
+
+## References 
+[1] 
+
+[2]
+
+[3]
+
+## Appendix 
+* `Exhibit 1: Summary Statistics Heat Map of Variables Used for Chart 1`
+```{r, echo = FALSE, message = FALSE, warnings = FALSE}
+### Heat Map
+
+#Correlation between variables (pay heightened attention to the high correlations between team score and other variables)
+p_load(GGally)
+ggcorr(i64_accidents)
+summary(i64_accidents)
+```
+
+* `Exhibit 1: Summary Statistics Heat Map of Variables Used for Chart 1`
+
+```{r, echo = FALSE, message = FALSE, warnings = FALSE}
+### Heat Map
+
+#Correlation between variables (pay heightened attention to the high correlations between team score and other variables)
+p_load(GGally)
+ggcorr(charlottesville_accidents)
+summary(charlottesville_accidents)
+```
+
+

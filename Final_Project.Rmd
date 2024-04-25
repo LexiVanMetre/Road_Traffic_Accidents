@@ -1,0 +1,57 @@
+---
+title: "Final Project" 
+subtitle: "Trending Car Accidents in Charlotteville Report"
+author: "Lexi Van Metre" 
+coauthors: "Anish Mandalika, Cynthia Nguyen, Wheat Fralin"
+output: html_notebook
+runtime: shiny
+---
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+```{r, include=FALSE}
+library(plotly)
+library(foreign)
+library(shiny)
+library(rsconnect)
+rsconnect::setAccountInfo(name='amv7av', token='70690EF486E42BB1A649B3E9BADAFAD3', secret='+gkGBwIcPZnTvGZS+cCzTw1EOM/62ngN7V8PhMHf')
+```
+
+```{r}
+# Retrieving Data 
+accidents_df<- read.csv("US_Accidents_Dec21_updated.csv")
+
+# Data Wrangling 
+virginia_accidents<-accidents_df[accidents_df$State=="VA",]
+nrow(virginia_accidents)
+nrow(accidents_df)
+virginia_accidents<-virginia_accidents[,-c(11,18,19,5,6,7,8)]
+# View(virginia_accidents)
+charlottesville_accidents<-virginia_accidents[virginia_accidents$Airport_Code=="KCHO",]
+nrow(charlottesville_accidents)
+# View(charlottesville_accidents)
+charlottesville_accidents<-charlottesville_accidents[,-c(6,11,13,30,36)]
+# View(charlottesville_accidents)
+normalized_charlottesville<- charlottesville_accidents[,-c(14,15,21,22,24,26,27,28,29,30)]
+# View(normalized_charlottesville)
+
+head(normalized_charlottesville)
+
+
+```
+
+```{r}
+accidents <- read.csv("charlottesville_df.csv")
+
+accidents$Severity <- as.factor(accidents$Severity)
+head(accidents)
+
+
+
+```
+```{r}
+
+```
+
